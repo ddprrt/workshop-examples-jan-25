@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "ownership",
+    "traits",
+    "errorhandling",
+    "iterators",
+    "cargotest",
+    "cargotestlib",
+]

@@ -1,5 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
+mod traits;
+
 use axum::{
     extract::{
         ws::{Message, WebSocket},
@@ -36,27 +38,6 @@ async fn ws_handler(
     let rx = tx.subscribe();
     ws.on_upgrade(|ws| handle_socket(ws, tx, rx))
 }
-/*
-trait ChatSink<T> {
-    fn send(&mut self, msg: T);
-}
-
-impl<T> ChatSink<T> for SplitSink<WebSocket, T> {
-    fn send(&mut self, msg: T) {
-        self.send(msg);
-    }
-}
-
-impl<T: OsStrExt> ChatSink<T> for OwnedWriteHalf {
-    fn send(&mut self, msg: T) {
-        self.write_all(msg.as_bytes());
-    }
-}
-
-async fn chat(sink: &mut impl ChatSink<String>) {
-    sink.send("Hello".to_string())
-}
-*/
 
 async fn handle_socket(ws: WebSocket, tx: Sender<Message>, mut rx: Receiver<Message>) {
     println!("Connected");

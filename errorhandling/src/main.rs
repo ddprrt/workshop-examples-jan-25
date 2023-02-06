@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, num::ParseIntError};
+use std::{fmt::Display, fs::File, io::Read, num::ParseIntError};
 
 fn open_file(file_name: Option<&str>) -> Result<String, std::io::Error> {
     let mut file = File::open(file_name.unwrap_or("input.txt"))?;
@@ -46,10 +46,19 @@ impl From<ErrorWithId> for NumberFromFileError {
     }
 }
 
+#[derive(Debug)]
 struct ErrorWithId {
     id: i32,
     err: std::io::Error,
 }
+
+impl Display for ErrorWithId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {}", self.id, self.err)
+    }
+}
+
+impl std::error::Error for ErrorWithId {}
 
 impl From<(i32, std::io::Error)> for ErrorWithId {
     fn from(value: (i32, std::io::Error)) -> Self {

@@ -7,4 +7,5 @@ members = [
     "cargotest",
     "cargotestlib",
     "asref",
+    "multithreading",
 ]

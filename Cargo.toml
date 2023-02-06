@@ -8,4 +8,6 @@ members = [
     "cargotestlib",
     "asref",
     "multithreading",
+    "tokio-echo",
+    "chat-axum",
 ]

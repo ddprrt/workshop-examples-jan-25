@@ -10,4 +10,5 @@ members = [
     "multithreading",
     "tokio-echo",
     "chat-axum",
+    "chat-loop",
 ]

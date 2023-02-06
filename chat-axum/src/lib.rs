@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-mod traits;
+use chat_loop::chat_loop;
 
 use axum::{
     extract::{
@@ -12,7 +12,7 @@ use axum::{
     routing::{get, get_service},
     Extension, Router,
 };
-use futures::{SinkExt, StreamExt};
+use futures::StreamExt;
 use tokio::sync::{
     broadcast::{self, Receiver, Sender},
     RwLock,
@@ -42,26 +42,7 @@ async fn ws_handler(
 async fn handle_socket(ws: WebSocket, tx: Sender<Message>, mut rx: Receiver<Message>) {
     println!("Connected");
     let (mut sink, mut stream) = ws.split();
-    loop {
-        tokio::select! {
-            msg = stream.next() => {
-                if let Some(Ok(result)) = msg {
-                    let result = tx.send(result);
-                    if result.is_err() {
-                        break;
-                    }
-                }
-            }
-            msg = rx.recv() => {
-                if let Ok(msg) = msg {
-                    let result = sink.send(msg).await;
-                    if result.is_err() {
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    chat_loop(&mut sink, &mut stream, &tx, &mut rx).await;
     println!("Disconnected");
 }
 

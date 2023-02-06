@@ -1,3 +1,4 @@
+use chat_loop::chat_loop;
 use std::{io::Result, net::SocketAddr};
 
 use tokio::{
@@ -26,12 +27,12 @@ async fn _echo(mut socket: TcpStream) -> Result<()> {
 }
 
 #[derive(Debug, Clone)]
-enum Msg {
+pub enum Msg {
     Message(String),
     Disconnect(SocketAddr),
 }
 
-async fn chat(
+async fn _chat(
     socket: TcpStream,
     addr: SocketAddr,
     tx: Sender<(SocketAddr, Msg)>,
@@ -119,6 +120,20 @@ async fn _select_chat(
     Ok(())
 }
 
+async fn loop_chat(
+    socket: TcpStream,
+    _addr: SocketAddr,
+    tx: Sender<String>,
+    mut rx: Receiver<String>,
+) -> Result<()> {
+    let (reader, mut writer) = socket.into_split();
+    let mut reader = BufReader::new(reader);
+
+    chat_loop(&mut writer, &mut reader, &tx, &mut rx).await;
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let listener = TcpListener::bind("localhost:8001").await?;
@@ -128,6 +143,6 @@ async fn main() -> Result<()> {
         let tx = tx.clone();
         let rx = tx.subscribe();
         println!("Listening to {}", addr);
-        tokio::spawn(chat(socket, addr, tx, rx));
+        tokio::spawn(loop_chat(socket, addr, tx, rx));
     }
 }

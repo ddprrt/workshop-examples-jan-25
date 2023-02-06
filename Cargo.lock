@@ -143,13 +143,23 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chat-axum"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "axum",
+ "chat-loop",
  "futures",
  "serde",
  "serde_json",
  "tokio",
  "tower-http",
+]
+
+[[package]]
+name = "chat-loop"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "futures",
+ "tokio",
 ]
 
 [[package]]
@@ -798,6 +808,7 @@ dependencies = [
 name = "tokio-echo"
 version = "0.1.0"
 dependencies = [
+ "chat-loop",
  "tokio",
 ]
 

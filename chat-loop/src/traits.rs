@@ -1,4 +1,4 @@
-use std::{fmt::Display, os::unix::prelude::OsStrExt};
+use std::fmt::Display;
 
 use async_trait::async_trait;
 use axum::extract::ws::{Message, WebSocket};
@@ -13,7 +13,7 @@ use tokio::{
 };
 
 #[derive(Debug)]
-struct ChatCommErr {
+pub struct ChatCommErr {
     msg: String,
 }
 
@@ -34,28 +34,28 @@ impl Display for ChatCommErr {
 impl std::error::Error for ChatCommErr {}
 
 #[async_trait]
-trait ChatSink<T> {
-    async fn send_msg(&mut self, msg: T) -> Result<(), ChatCommErr>;
+pub trait ChatSink {
+    type Item: Clone;
+    async fn send_msg(&mut self, msg: Self::Item) -> Result<(), ChatCommErr>;
 }
 
 #[async_trait]
-impl<T> ChatSink<T> for SplitSink<WebSocket, T>
+impl<T> ChatSink for SplitSink<WebSocket, T>
 where
     Self: SinkExt<T> + Send,
-    T: Send,
+    T: Send + Clone,
 {
-    async fn send_msg(&mut self, msg: T) -> Result<(), ChatCommErr> {
+    type Item = T;
+    async fn send_msg(&mut self, msg: Self::Item) -> Result<(), ChatCommErr> {
         self.send(msg).await.map_err(|_| ChatCommErr::new())?;
         Ok(())
     }
 }
 
 #[async_trait]
-impl<T> ChatSink<T> for OwnedWriteHalf
-where
-    T: Send + 'static + OsStrExt + Sync,
-{
-    async fn send_msg(&mut self, msg: T) -> Result<(), ChatCommErr> {
+impl ChatSink for OwnedWriteHalf {
+    type Item = String;
+    async fn send_msg(&mut self, msg: Self::Item) -> Result<(), ChatCommErr> {
         self.write_all(msg.as_bytes())
             .await
             .map_err(|_| ChatCommErr::new())?;
@@ -64,16 +64,18 @@ where
 }
 
 #[async_trait]
-trait ChatStream<T> {
-    async fn recv_msg(&mut self) -> Result<T, ChatCommErr>;
+pub trait ChatStream {
+    type Item: Clone;
+    async fn recv_msg(&mut self) -> Result<Self::Item, ChatCommErr>;
 }
 
 #[async_trait]
-impl ChatStream<Message> for SplitStream<WebSocket>
+impl ChatStream for SplitStream<WebSocket>
 where
     Self: StreamExt + Send,
 {
-    async fn recv_msg(&mut self) -> Result<Message, ChatCommErr> {
+    type Item = Message;
+    async fn recv_msg(&mut self) -> Result<Self::Item, ChatCommErr> {
         self.next()
             .await
             .ok_or(ChatCommErr::new())?
@@ -82,8 +84,9 @@ where
 }
 
 #[async_trait]
-impl ChatStream<String> for BufReader<OwnedReadHalf> {
-    async fn recv_msg(&mut self) -> Result<String, ChatCommErr> {
+impl ChatStream for BufReader<OwnedReadHalf> {
+    type Item = String;
+    async fn recv_msg(&mut self) -> Result<Self::Item, ChatCommErr> {
         let mut buf = String::new();
         let x = self
             .read_line(&mut buf)

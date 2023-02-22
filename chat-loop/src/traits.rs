@@ -12,13 +12,14 @@ use tokio::{
     net::tcp::{OwnedReadHalf, OwnedWriteHalf},
 };
 
+// Chat Communication Error
 #[derive(Debug)]
 pub struct ChatCommErr {
     msg: String,
 }
 
 impl ChatCommErr {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             msg: "Error Chatting".to_string(),
         }
@@ -33,10 +34,18 @@ impl Display for ChatCommErr {
 
 impl std::error::Error for ChatCommErr {}
 
+// End chat communication error
+
 #[async_trait]
 pub trait ChatSink {
     type Item: Clone;
     async fn send_msg(&mut self, msg: Self::Item) -> Result<(), ChatCommErr>;
+}
+
+#[async_trait]
+pub trait ChatStream {
+    type Item: Clone;
+    async fn recv_msg(&mut self) -> Result<Self::Item, ChatCommErr>;
 }
 
 #[async_trait]
@@ -61,12 +70,6 @@ impl ChatSink for OwnedWriteHalf {
             .map_err(|_| ChatCommErr::new())?;
         Ok(())
     }
-}
-
-#[async_trait]
-pub trait ChatStream {
-    type Item: Clone;
-    async fn recv_msg(&mut self) -> Result<Self::Item, ChatCommErr>;
 }
 
 #[async_trait]

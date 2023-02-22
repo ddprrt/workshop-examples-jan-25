@@ -11,4 +11,5 @@ members = [
     "tokio-echo",
     "chat-axum",
     "chat-loop",
+    "key-value-store",
 ]

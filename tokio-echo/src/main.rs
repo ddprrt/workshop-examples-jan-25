@@ -1,9 +1,13 @@
-use chat_loop::chat_loop;
+use async_trait::async_trait;
+use chat_loop::{
+    chat_loop,
+    traits::{ChatCommErr, ChatSink},
+};
 use std::{io::Result, net::SocketAddr};
 
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
-    net::{TcpListener, TcpStream},
+    net::{tcp::OwnedWriteHalf, TcpListener, TcpStream},
     sync::broadcast::{self, Receiver, Sender},
 };
 
@@ -126,7 +130,8 @@ async fn loop_chat(
     tx: Sender<String>,
     mut rx: Receiver<String>,
 ) -> Result<()> {
-    let (reader, mut writer) = socket.into_split();
+    let (reader, writer) = socket.into_split();
+    let mut writer = MyOwnedWriter(writer);
     let mut reader = BufReader::new(reader);
 
     chat_loop(&mut writer, &mut reader, &tx, &mut rx).await;
@@ -134,10 +139,31 @@ async fn loop_chat(
     Ok(())
 }
 
+// Newtype
+struct MyOwnedWriter(OwnedWriteHalf);
+
+#[async_trait]
+impl ChatSink for MyOwnedWriter {
+    type Item = String;
+    async fn send_msg(&mut self, msg: Self::Item) -> core::result::Result<(), ChatCommErr> {
+        self.0
+            .write_all(msg.as_bytes())
+            .await
+            .map_err(|_| ChatCommErr::new())?;
+        Ok(())
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let listener = TcpListener::bind("localhost:8001").await?;
     let (tx, _) = broadcast::channel(100);
+    let mut vec = vec![1, 2, 3];
+
+    for i in vec.iter_mut() {
+        print!("{i}");
+    }
+
     loop {
         let (socket, addr) = listener.accept().await?;
         let tx = tx.clone();

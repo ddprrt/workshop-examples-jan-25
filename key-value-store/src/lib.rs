@@ -11,6 +11,7 @@ use axum::{
     BoxError, Router,
 };
 use hyper::{Body, Request};
+use log::LogLayer;
 use tokio::sync::RwLock;
 use tower::{timeout::TimeoutLayer, ServiceBuilder};
 use tower_http::{
@@ -53,6 +54,7 @@ pub fn router(state: &SharedState) -> Router {
         )
         .nest("/admin", admin_routes(state))
         .layer(TraceLayer::new_for_http())
+        .layer(LogLayer::new())
 }
 
 fn admin_routes(state: &SharedState) -> Router {

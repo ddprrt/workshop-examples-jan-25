@@ -23,3 +23,7 @@ harness = false
 [[bench]]
 name = "fibonacci_rec"
 harness = false
+
+[[bench]]
+name = "async_fib"
+harness = false

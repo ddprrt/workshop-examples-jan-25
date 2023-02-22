@@ -12,4 +12,5 @@ members = [
     "chat-axum",
     "chat-loop",
     "key-value-store",
+    "test-criterion",
 ]
